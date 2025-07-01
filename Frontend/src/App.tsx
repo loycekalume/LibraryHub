@@ -6,6 +6,7 @@ import SignUp from "./pages/Auth/signUp";
 import Login from "./pages/Auth/login"
 import Books from "./pages/books"
 import LibrarianDashboard from "./pages/librarianDashboard";
+import Borrowers from "./pages/borrowers";
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/mybooks" element={<Mybooks/>} />
         <Route path="/librariandashboard" element={<LibrarianDashboard />} />
         <Route path="/books" element={<Books />} />
+         <Route path="/borrowers" element={<Borrowers />} />
       </Routes>
     </BrowserRouter>
   );
