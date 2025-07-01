@@ -62,7 +62,7 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="d-flex align-items-center">
-            <Link to="/" className="text-decoration-none text-dark me-4">Home</Link>
+            <Link to="/" className="text-decoration-none text-dark me-4" style={{ color: '#8b5cf6' }}>Home</Link>
             <Link to="/catalog" className="text-decoration-none text-dark me-4">Catalog</Link>
             <Link to="/mybooks" className="text-decoration-none text-dark me-4">MyBooks</Link>
           </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import {Link} from 'react-router-dom'
 
 // Type definitions
 interface Book {
@@ -145,9 +146,9 @@ const LibraryHub: React.FC = () => {
           </a>
           
           <div className="navbar-nav ms-auto">
-            <a className="nav-link text-muted" href="#">Home</a>
-            <a className="nav-link text-muted" href="#">Catalog</a>
-            <a className="nav-link text-muted" href="#">MyBooks</a>
+            <Link to="/" className="nav-link text-muted" >Home</Link>
+           <Link to="/catalog" className="nav-link text-muted" style={{ color: '#8b5cf6' }}>Catalog</Link>
+            <Link to="/mybooks"className="nav-link text-muted" >MyBooks</Link>
             <div className="nav-link">
               <div className="rounded-circle bg-light d-flex align-items-center justify-content-center" 
                    style={{ width: '32px', height: '32px' }}>
