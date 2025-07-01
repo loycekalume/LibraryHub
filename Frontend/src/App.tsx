@@ -3,8 +3,10 @@ import Home from "./pages/home";
 import Catalog from './pages/catalog'
 import Mybooks from './pages/mybooks'
 import SignUp from "./pages/Auth/signUp"; 
-import Login from "./pages/Auth/login" // or ./pages/Auth/Register
-// import Login from "./pages/Auth/Login"; ← add later
+import Login from "./pages/Auth/login"
+import Books from "./pages/books"
+import LibrarianDashboard from "./pages/librarianDashboard";
+
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/catalog" element={<Catalog />} />
         <Route path="/mybooks" element={<Mybooks/>} />
+        <Route path="/librariandashboard" element={<LibrarianDashboard />} />
+        <Route path="/books" element={<Books />} />
       </Routes>
     </BrowserRouter>
   );
