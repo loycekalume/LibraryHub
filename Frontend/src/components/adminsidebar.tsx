@@ -1,15 +1,16 @@
+// src/components/AdminSidebar.tsx
 import { NavLink } from "react-router-dom";
 
-export default function Sidebar() {
+export default function AdminSidebar() {
   return (
     <div
-      className="d-flex flex-column vh-100 p-3 text-white"
-      style={{ width: "250px", backgroundColor: "#9333ea" }}
+      className="d-flex flex-column p-3 text-white"
+      style={{ width: "250px", backgroundColor: "#9333ea", minHeight: "100vh" }}
     >
-      <h5 className="mb-4">📚 LibraryHub</h5>
+      <h5 className="mb-4">🛠 Admin Panel</h5>
 
       <NavLink
-        to="/librariandashboard"
+        to="/admin/dashboard"
         className={({ isActive }) =>
           `nav-link mb-2 ${isActive ? "fw-bold text-white bg-dark rounded px-2 py-1" : "text-white"}`
         }
@@ -18,7 +19,7 @@ export default function Sidebar() {
       </NavLink>
 
       <NavLink
-        to="/books"
+        to="/admin/books"
         className={({ isActive }) =>
           `nav-link mb-2 ${isActive ? "fw-bold text-white bg-dark rounded px-2 py-1" : "text-white"}`
         }
@@ -27,25 +28,16 @@ export default function Sidebar() {
       </NavLink>
 
       <NavLink
-        to="/issuebook"
+        to="/admin/users"
         className={({ isActive }) =>
           `nav-link mb-2 ${isActive ? "fw-bold text-white bg-dark rounded px-2 py-1" : "text-white"}`
         }
       >
-        Book Issue
-      </NavLink>
-
-      <NavLink
-        to="/borrowers"
-        className={({ isActive }) =>
-          `nav-link mb-2 ${isActive ? "fw-bold text-white bg-dark rounded px-2 py-1" : "text-white"}`
-        }
-      >
-        Borrowers
+        Users
       </NavLink>
 
       <div className="mt-auto">
-        <button className="btn btn-outline-light w-100 mt-4">🔓 Logout</button>
+        <button className="btn btn-outline-light w-100 mt-4">🔓 Log out</button>
       </div>
     </div>
   );
