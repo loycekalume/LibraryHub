@@ -9,6 +9,8 @@ import LibrarianDashboard from "./pages/librarianDashboard";
 import Borrowers from "./pages/borrowers";
 import IssueBook from "./pages/issueBook";
 import Adminbook from "./pages/adminbooks"
+import Adminusers from "./pages/adminUsers"
+import AdminDashboard from "./pages/adminDashboard";
 
 
 function App() {
@@ -24,7 +26,9 @@ function App() {
         <Route path="/books" element={<Books />} />
          <Route path="/borrowers" element={<Borrowers />} />
           <Route path="/issuebook" element={<IssueBook />} />
-               <Route path="/adminbooks" element={<Adminbook />} />
+         <Route path="/adminbooks" element={<Adminbook />} />
+        <Route path="/adminusers" element={<Adminusers />} />
+         <Route path="/admindashboard" element={<AdminDashboard />} />
       </Routes>
     </BrowserRouter>
   );

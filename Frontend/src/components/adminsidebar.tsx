@@ -10,7 +10,7 @@ export default function AdminSidebar() {
       <h5 className="mb-4">🛠 Admin Panel</h5>
 
       <NavLink
-        to="/admin/dashboard"
+        to="/admindashboard"
         className={({ isActive }) =>
           `nav-link mb-2 ${isActive ? "fw-bold text-white bg-dark rounded px-2 py-1" : "text-white"}`
         }
@@ -19,7 +19,7 @@ export default function AdminSidebar() {
       </NavLink>
 
       <NavLink
-        to="/admin/books"
+        to="/adminbooks"
         className={({ isActive }) =>
           `nav-link mb-2 ${isActive ? "fw-bold text-white bg-dark rounded px-2 py-1" : "text-white"}`
         }
@@ -28,7 +28,7 @@ export default function AdminSidebar() {
       </NavLink>
 
       <NavLink
-        to="/admin/users"
+        to="/adminusers"
         className={({ isActive }) =>
           `nav-link mb-2 ${isActive ? "fw-bold text-white bg-dark rounded px-2 py-1" : "text-white"}`
         }
