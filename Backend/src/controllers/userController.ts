@@ -6,15 +6,26 @@ import bcrypt from "bcrypt";
 export const updateUser = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { first_name, last_name, email, phone_number, password, role } = req.body;
+    const { first_name, last_name, email, phone_number, password, role,status } = req.body;
 
     const checkUser = await pool.query("SELECT * FROM users WHERE user_id = $1", [id]);
     if (checkUser.rows.length === 0) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Optional: Check if email is already used by another user
+    const existingEmail = await pool.query(
+      "SELECT * FROM users WHERE email = $1 AND user_id != $2",
+      [email, id]
+    );
+    if (existingEmail.rows.length > 0) {
+      return res.status(400).json({ message: "Email already in use" });
     }
 
     let hashedPassword = checkUser.rows[0].password;
-    if (password) {
+
+    // Hash new password only if it's provided
+    if (password && password.trim() !== "") {
       const salt = await bcrypt.genSalt(10);
       hashedPassword = await bcrypt.hash(password, salt);
     }
@@ -27,13 +38,18 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
            phone_number = $4,
            password = $5,
            role = $6,
+           status =$7,
            updated_at = NOW()
-       WHERE user_id = $7
-       RETURNING user_id, first_name, last_name, email, phone_number, role`,
-      [first_name, last_name, email, phone_number, hashedPassword, role, id]
+       WHERE user_id = $8
+       RETURNING user_id, first_name, last_name, email, phone_number, role, status`,
+      [first_name, last_name, email, phone_number, hashedPassword, role, status,id]
     );
 
-    res.json({ message: "User updated successfully", user: result.rows[0] });
+    res.json({
+      message: "User updated successfully",
+      user: result.rows[0]
+    });
+
   } catch (error) {
     console.error("Error updating user:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -41,9 +57,10 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
+
 export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
   const result = await pool.query(`
-    SELECT user_id, first_name, last_name, email, phone_number, role, created_at
+    SELECT user_id, first_name, last_name, email, phone_number, role,status created_at
     FROM users
     ORDER BY created_at DESC
   `);
@@ -60,7 +77,7 @@ export const getSingleUser = asyncHandler(async (req: Request, res: Response) =>
   const { id } = req.params;
 
   const result = await pool.query(
-    `SELECT user_id, first_name, last_name, email, phone_number, role, created_at
+    `SELECT user_id, first_name, last_name, email, phone_number, role,status, created_at
      FROM users WHERE user_id = $1`,
     [id]
   );
@@ -87,3 +104,50 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   
     res.status(200).json({ message: "User deleted successfully" });
   });
+
+
+  export const patchUser = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const fields = req.body;
+
+  const checkUser = await pool.query("SELECT * FROM users WHERE user_id = $1", [id]);
+  if (checkUser.rows.length === 0) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const currentUser = checkUser.rows[0];
+
+  const {
+    first_name = currentUser.first_name,
+    last_name = currentUser.last_name,
+    email = currentUser.email,
+    phone_number = currentUser.phone_number,
+    password,
+    role = currentUser.role,
+    status = currentUser.status
+   
+  } = fields;
+
+  let hashedPassword = currentUser.password;
+  if (password && password.trim() !== "") {
+    const salt = await bcrypt.genSalt(10);
+    hashedPassword = await bcrypt.hash(password, salt);
+  }
+
+  const result = await pool.query(
+    `UPDATE users SET
+      first_name = $1,
+      last_name = $2,
+      email = $3,
+      phone_number = $4,
+      password = $5,
+      role = $6,
+      status =$7,
+      updated_at = NOW()
+    WHERE user_id = $8
+    RETURNING user_id, first_name, last_name, email, phone_number, role,status`,
+    [first_name, last_name, email, phone_number, hashedPassword, role,status, id]
+  );
+
+  res.status(200).json({ message: "User updated", user: result.rows[0] });
+});

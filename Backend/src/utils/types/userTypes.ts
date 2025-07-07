@@ -8,6 +8,7 @@ export interface User {
     last_name: string;
     phone_number: string; 
     role: "librarian" | "borrower" | "admin";
+    status:"active"|"inactive";
     is_active: boolean;
     created_at: string; 
     updated_at?: string; 

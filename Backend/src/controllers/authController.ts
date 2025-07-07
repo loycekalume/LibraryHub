@@ -6,10 +6,10 @@ import asyncHandler from "../middlewares/asyncHandler";
 
 // ----------------- REGISTER -----------------
 export const registerUser = asyncHandler(async (req: Request, res: Response) => {
-  const { first_name, last_name, phone_number, email, password, role } = req.body;
+  const { first_name, last_name, phone_number, email, password, role,status="active" } = req.body;
 
   // 1. Validation
-  if (!first_name || !last_name || !email || !phone_number || !password || !role) {
+  if (!first_name || !last_name || !email || !phone_number || !password || !role || !status) {
     return res.status(400).json({ message: "Please provide all required fields" });
   }
 
@@ -29,9 +29,9 @@ export const registerUser = asyncHandler(async (req: Request, res: Response) => 
 
   // 4. Insert user
   const insertQuery = `
-    INSERT INTO users (email, password, phone_number, first_name, last_name, role)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING user_id, email, phone_number, first_name, last_name, role
+    INSERT INTO users (email, password, phone_number, first_name, last_name, role,status)
+    VALUES ($1, $2, $3, $4, $5, $6,$7)
+    RETURNING user_id, email, phone_number, first_name, last_name, role,status
   `;
 
   const result = await pool.query(insertQuery, [
@@ -41,6 +41,7 @@ export const registerUser = asyncHandler(async (req: Request, res: Response) => 
     first_name,
     last_name,
     role,
+    status
   ]);
 
   const user = result.rows[0];
@@ -64,7 +65,7 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const userQuery = `
-    SELECT user_id, email, password, phone_number, first_name, last_name, role
+    SELECT user_id, email, password, phone_number, first_name, last_name, role,status
     FROM users WHERE email = $1
   `;
   const result = await pool.query(userQuery, [email]);
@@ -93,6 +94,7 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
       last_name: user.last_name,
       phone_number: user.phone_number,
       role: user.role,
+      status:user.status
     },
   });
 });

@@ -8,6 +8,7 @@ import userRoutes from './routes/userRoutes'
 import booksRoutes from './routes/booksRoutes'
 import borrowRoutes from './routes/borrowRoutes'
 import copiesRoutes from './routes/copiesRoutes'
+import bookSummaryRoutes from './routes/bookSummaryRoutes'
 
 
 
@@ -35,6 +36,7 @@ app.use("/api/v1/auth", authRoutes)
 app.use("/api/v1/users", userRoutes)
 app.use("/api/v1/books", booksRoutes)
 app.use("/api/v1/borrows", borrowRoutes)
+app.use("/api/v1/summary", bookSummaryRoutes)
 app.use("/api/v1/bookCopies", copiesRoutes)
 
 

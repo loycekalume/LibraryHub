@@ -24,11 +24,11 @@ function App() {
         <Route path="/mybooks" element={<Mybooks/>} />
         <Route path="/librariandashboard" element={<LibrarianDashboard />} />
         <Route path="/books" element={<Books />} />
-         <Route path="/borrowers" element={<Borrowers />} />
-          <Route path="/issuebook" element={<IssueBook />} />
-         <Route path="/adminbooks" element={<Adminbook />} />
+        <Route path="/borrowers" element={<Borrowers />} />
+        <Route path="/issuebook" element={<IssueBook />} />
+        <Route path="/adminbooks" element={<Adminbook />} />
         <Route path="/adminusers" element={<Adminusers />} />
-         <Route path="/admindashboard" element={<AdminDashboard />} />
+        <Route path="/admindashboard" element={<AdminDashboard />} />
       </Routes>
     </BrowserRouter>
   );
