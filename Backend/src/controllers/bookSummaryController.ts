@@ -7,7 +7,7 @@ import pool from "../db/db.config";
 export const getBooksSummary = asyncHandler(async (_req: Request, res: Response) => {
   const result = await pool.query(`
     SELECT 
-      b.book_id AS id,
+      b.book_id AS book_id,
       b.title,
       b.author,
       COUNT(c.copy_id) AS total_copies,

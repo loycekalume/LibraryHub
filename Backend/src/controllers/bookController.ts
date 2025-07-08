@@ -76,10 +76,6 @@ export const createBook = asyncHandler(async (req: BookRequest, res: Response) =
 export const updateBook = asyncHandler(async (req: BookRequest, res: Response) => {
   const { id } = req.params;
 
-  if (!req.user) {
-    return res.status(401).json({ message: "Not authorized" });
-  }
-
   const {
     title,
     author,
@@ -91,13 +87,17 @@ export const updateBook = asyncHandler(async (req: BookRequest, res: Response) =
     description,
   } = req.body;
 
-  const existingBook = await pool.query("SELECT * FROM books WHERE book_id = $1", [id]);
+  // 1. Check if book exists
+  const existingBookRes = await pool.query("SELECT * FROM books WHERE book_id = $1", [id]);
 
-  if (existingBook.rows.length === 0) {
+  if (existingBookRes.rows.length === 0) {
     return res.status(404).json({ message: "Book not found" });
   }
 
-  const updatedBook = await pool.query(
+  const existingBook = existingBookRes.rows[0];
+
+  // 2. Update book fields
+  const updatedBookRes = await pool.query(
     `UPDATE books SET
       title = $1,
       author = $2,
@@ -113,16 +113,46 @@ export const updateBook = asyncHandler(async (req: BookRequest, res: Response) =
     [title, author, published_year, pages, image_url, genre, total_copies, description, id]
   );
 
-  res.status(200).json(updatedBook.rows[0]);
+  const updatedBook = updatedBookRes.rows[0];
+
+  // 3. Check if total_copies increased
+  const currentCopyCountRes = await pool.query(
+    "SELECT COUNT(*) FROM book_copies WHERE book_id = $1",
+    [id]
+  );
+
+  const currentCopyCount = parseInt(currentCopyCountRes.rows[0].count);
+
+  if (total_copies > currentCopyCount) {
+    const newCopyQueries = [];
+
+    for (let i = currentCopyCount + 1; i <= total_copies; i++) {
+      const copyNumber = `BOOK${id}-COPY${String(i).padStart(3, '0')}`;
+      newCopyQueries.push(
+        pool.query(
+          `INSERT INTO book_copies (book_id, copy_number, is_available)
+           VALUES ($1, $2, true)`,
+          [id, copyNumber]
+        )
+      );
+    }
+
+    await Promise.all(newCopyQueries);
+  }
+
+  res.status(200).json({
+    message: "Book updated successfully",
+    book: updatedBook,
+  });
 });
 
 
 export const deleteBook = asyncHandler(async (req: BookRequest, res: Response) => {
   const { id } = req.params;
 
-  if (!req.user) {
-    return res.status(401).json({ message: "Not authorized" });
-  }
+  // if (!req.user) {
+  //   return res.status(401).json({ message: "Not authorized" });
+  // }
 
   const deleted = await pool.query("DELETE FROM books WHERE book_id = $1 RETURNING *", [id]);
 
@@ -131,4 +161,55 @@ export const deleteBook = asyncHandler(async (req: BookRequest, res: Response) =
   }
 
   res.status(200).json({ message: "Book and its copies deleted successfully" });
+});
+
+
+
+
+export const patchBook = asyncHandler(async (req: BookRequest, res: Response) => {
+  const { id } = req.params;
+
+  // Optional: Uncomment if authentication is enforced
+  // if (!req.user) {
+  //   return res.status(401).json({ message: "Not authorized" });
+  // }
+
+  // Check if book exists
+  const check = await pool.query("SELECT * FROM books WHERE book_id = $1", [id]);
+  if (check.rows.length === 0) {
+    return res.status(404).json({ message: "Book not found" });
+  }
+
+  // Dynamically build SET clause
+  const fields = [];
+  const values = [];
+  let index = 1;
+
+  for (const key in req.body) {
+    if (req.body[key] !== undefined) {
+      fields.push(`${key} = $${index}`);
+      values.push(req.body[key]);
+      index++;
+    }
+  }
+
+  if (fields.length === 0) {
+    return res.status(400).json({ message: "No fields provided for update" });
+  }
+
+  // Add updated_at and book_id
+  fields.push(`updated_at = CURRENT_TIMESTAMP`);
+  const query = `
+    UPDATE books 
+    SET ${fields.join(", ")} 
+    WHERE book_id = $${index}
+    RETURNING *;
+  `;
+  values.push(id);
+
+  const result = await pool.query(query, values);
+  res.status(200).json({
+    message: "Book updated successfully",
+    book: result.rows[0],
+  });
 });

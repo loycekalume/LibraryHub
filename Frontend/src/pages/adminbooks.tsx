@@ -1,26 +1,124 @@
-// src/pages/admin/AdminBooks.tsx
 import AdminLayout from "../Layouts/adminLayouts";
-import { useState } from "react";
-import { Form, Button } from "react-bootstrap";
+import { useState, useEffect } from "react";
+import { Form, Button, Modal } from "react-bootstrap";
+import axios from "../utils/axios";
 
 interface Book {
-  id: number;
-  author: string;
+  book_id: number;
   title: string;
-  total: number;
-  available: number;
+  author: string;
+  total_copies: number;
+  available_copies: number;
+  description?: string;
+  published_year?: number;
+  pages?: number;
+  image_url?: string;
+  genre?: string;
 }
 
 export default function AdminBooks() {
+  const [books, setBooks] = useState<Book[]>([]);
   const [search, setSearch] = useState("");
-  const [books] = useState<Book[]>([
-    { id: 1, author: "James Yaung", title: "1984", total: 20, available: 3 },
-    { id: 2, author: "Nicole Akinyi", title: "Milk and Honey", total: 12, available: 8 },
-    { id: 3, author: "James Yaung", title: "1984", total: 15, available: 3 },
-    { id: 4, author: "Nicole Akinyi", title: "Milk and Honey", total: 10, available: 10 },
-    { id: 5, author: "James Yaung", title: "1984", total: 13, available: 3 },
-    { id: 6, author: "Nicole Akinyi", title: "Milk and Honey", total: 40, available: 23 },
-  ]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  const [formData, setFormData] = useState<Omit<Book, "book_id" | "available_copies">>({
+    title: "",
+    author: "",
+    total_copies: 1,
+    description: "",
+    published_year: undefined,
+    pages: undefined,
+    image_url: "",
+    genre: ""
+  });
+
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  const fetchBooks = async () => {
+    try {
+      const res = await axios.get("/summary");
+      const parsedBooks = res.data.books.map((b: any) => ({
+        ...b,
+        total_copies: parseInt(b.total_copies),
+        available_copies: parseInt(b.available_copies),
+        published_year: b.published_year ? parseInt(b.published_year) : undefined,
+        pages: b.pages ? parseInt(b.pages) : undefined
+      }));
+      setBooks(parsedBooks);
+    } catch (err) {
+      console.error("Failed to fetch books", err);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]:
+        name === "total_copies" || name === "pages" || name === "published_year"
+          ? value === "" ? undefined : parseInt(value)
+          : value
+    }));
+  };
+
+  const handleAddOrUpdate = async () => {
+    try {
+      if (editingId) {
+        await axios.put(`/books/${editingId}`, formData);
+      } else {
+        await axios.post("/books", formData);
+      }
+      setShowModal(false);
+      setEditingId(null);
+      resetForm();
+      fetchBooks();
+    } catch (err) {
+      console.error("Failed to save book", err);
+      alert("Failed to save book. Check inputs and try again.");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this book?")) return;
+    try {
+      await axios.delete(`/books/${id}`);
+      fetchBooks();
+    } catch (err) {
+      console.error("Failed to delete book", err);
+      alert("Failed to delete book");
+    }
+  };
+
+  const handleEdit = (book: Book) => {
+    setEditingId(book.book_id);
+    setFormData({
+      title: book.title || "",
+      author: book.author || "",
+      total_copies: book.total_copies || 0,
+      description: book.description || "",
+      published_year: book.published_year ?? undefined,
+      pages: book.pages ?? undefined,
+      image_url: book.image_url || "",
+      genre: book.genre || ""
+    });
+    setShowModal(true);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      author: "",
+      total_copies: 1,
+      description: "",
+      published_year: undefined,
+      pages: undefined,
+      image_url: "",
+      genre: ""
+    });
+  };
 
   const filtered = books.filter(book =>
     book.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -31,7 +129,9 @@ export default function AdminBooks() {
     <AdminLayout>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h3 className="fw-bold">📚 Books</h3>
-        <Button variant="primary">➕ Add Book</Button>
+        <Button variant="primary" onClick={() => { setEditingId(null); resetForm(); setShowModal(true); }}>
+          ➕ Add Book
+        </Button>
       </div>
 
       <Form.Control
@@ -61,14 +161,14 @@ export default function AdminBooks() {
               </tr>
             ) : (
               filtered.map(book => (
-                <tr key={book.id}>
+                <tr key={book.book_id}>
                   <td>{book.author}</td>
                   <td>{book.title}</td>
-                  <td>{book.total}</td>
-                  <td>{book.available}</td>
+                  <td>{book.total_copies}</td>
+                  <td>{book.available_copies}</td>
                   <td>
-                    <Button size="sm" variant="link" className="text-primary me-2">Edit</Button>
-                    <Button size="sm" variant="link" className="text-danger">Delete</Button>
+                    <Button size="sm" variant="link" className="text-primary me-2" onClick={() => handleEdit(book)}>Edit</Button>
+                    <Button size="sm" variant="link" className="text-danger" onClick={() => handleDelete(book.book_id)}>Delete</Button>
                   </td>
                 </tr>
               ))
@@ -76,6 +176,55 @@ export default function AdminBooks() {
           </tbody>
         </table>
       </div>
+
+      {/* Add/Edit Modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{editingId ? "Edit Book" : "Add Book"}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-2">
+              <Form.Label>Title</Form.Label>
+              <Form.Control name="title" value={formData.title} onChange={handleChange} />
+            </Form.Group>
+            <Form.Group className="mb-2">
+              <Form.Label>Author</Form.Label>
+              <Form.Control name="author" value={formData.author} onChange={handleChange} />
+            </Form.Group>
+            <Form.Group className="mb-2">
+              <Form.Label>Total Copies</Form.Label>
+              <Form.Control name="total_copies" type="number" value={formData.total_copies} onChange={handleChange} />
+            </Form.Group>
+            <Form.Group className="mb-2">
+              <Form.Label>Description</Form.Label>
+              <Form.Control name="description" value={formData.description ?? ""} onChange={handleChange} as="textarea" />
+            </Form.Group>
+            <Form.Group className="mb-2">
+              <Form.Label>Genre</Form.Label>
+              <Form.Control name="genre" value={formData.genre ?? ""} onChange={handleChange} />
+            </Form.Group>
+            <Form.Group className="mb-2">
+              <Form.Label>Published Year</Form.Label>
+              <Form.Control name="published_year" type="number" value={formData.published_year ?? ""} onChange={handleChange} />
+            </Form.Group>
+            <Form.Group className="mb-2">
+              <Form.Label>Pages</Form.Label>
+              <Form.Control name="pages" type="number" value={formData.pages ?? ""} onChange={handleChange} />
+            </Form.Group>
+            <Form.Group className="mb-2">
+              <Form.Label>Image URL</Form.Label>
+              <Form.Control name="image_url" value={formData.image_url ?? ""} onChange={handleChange} />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
+          <Button variant="primary" onClick={handleAddOrUpdate}>
+            {editingId ? "Update" : "Add Book"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </AdminLayout>
   );
 }
