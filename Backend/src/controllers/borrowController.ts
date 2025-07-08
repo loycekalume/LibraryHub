@@ -2,16 +2,6 @@ import { Request, Response } from "express";
 import asyncHandler from "../middlewares/asyncHandler";
 import pool from "../db/db.config";
 
-// =========================
-// 1. ISSUE A BOOK
-// =========================
-
-
-
-
-// =========================
-// 3. EXTEND DUE DATE
-// =========================
 export const extendDueDate = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params; // borrow_id
   const { new_due_date } = req.body;
@@ -38,9 +28,7 @@ export const extendDueDate = asyncHandler(async (req: Request, res: Response) =>
   res.status(200).json({ message: "Due date extended successfully" });
 });
 
-// =========================
-// 4. GET OVERDUE RECORDS
-// =========================
+
 export const getOverdueBorrows = asyncHandler(async (req: Request, res: Response) => {
   const result = await pool.query(
     `SELECT b.borrow_id, u.email, u.first_name, u.last_name,
@@ -56,7 +44,7 @@ export const getOverdueBorrows = asyncHandler(async (req: Request, res: Response
 });
 
 
-// controllers/borrowController.ts
+
 
 export const getAllBorrows = asyncHandler(async (req: Request, res: Response) => {
   const result = await pool.query(`
