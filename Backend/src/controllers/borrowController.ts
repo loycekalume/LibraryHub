@@ -5,81 +5,9 @@ import pool from "../db/db.config";
 // =========================
 // 1. ISSUE A BOOK
 // =========================
-export const issueBook = asyncHandler(async (req: Request, res: Response) => {
-  const { user_id, copy_id, due_date } = req.body;
-
-  if (!user_id || !copy_id || !due_date) {
-    return res.status(400).json({ message: "Missing required fields" });
-  }
-
-  // 1. Validate selected copy
-  const copyResult = await pool.query(
-    `SELECT * FROM book_copies WHERE copy_id = $1`,
-    [copy_id]
-  );
-
-  if (copyResult.rows.length === 0) {
-    return res.status(404).json({ message: "Copy not found" });
-  }
-
-  const copy = copyResult.rows[0];
-
-  if (!copy.is_available) {
-    return res.status(400).json({ message: "This copy is not available" });
-  }
-
-  // 2. Create borrow record
-  const borrowResult = await pool.query(
-    `INSERT INTO borrows (user_id, copy_id, due_date, status)
-     VALUES ($1, $2, $3, 'borrowed')
-     RETURNING *`,
-    [user_id, copy_id, due_date]
-  );
-
-  // 3. Mark copy as unavailable
-  await pool.query(
-    `UPDATE book_copies SET is_available = false WHERE copy_id = $1`,
-    [copy_id]
-  );
-
-  res.status(201).json({
-    message: "Book issued successfully",
-    borrow: borrowResult.rows[0]
-  });
-});
 
 
-// =========================
-// 2. RETURN A BOOK
-// =========================
-export const returnBook = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params; 
 
-  // 1. Get borrow record
-  const borrow = await pool.query(`SELECT * FROM borrows WHERE borrow_id = $1`, [id]);
-
-  if (borrow.rows.length === 0) {
-    return res.status(404).json({ message: "Borrow record not found" });
-  }
-
-  const borrowData = borrow.rows[0];
-
-  // 2. Update borrow status
-  await pool.query(
-    `UPDATE borrows 
-     SET status = 'returned', return_date = CURRENT_DATE 
-     WHERE borrow_id = $1`,
-    [id]
-  );
-
-  // 3. Make the copy available again
-  await pool.query(
-    `UPDATE book_copies SET is_available = true WHERE copy_id = $1`,
-    [borrowData.copy_id]
-  );
-
-  res.status(200).json({ message: "Book returned successfully" });
-});
 
 // =========================
 // 3. EXTEND DUE DATE

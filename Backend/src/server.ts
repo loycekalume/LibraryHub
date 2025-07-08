@@ -9,6 +9,7 @@ import booksRoutes from './routes/booksRoutes'
 import borrowRoutes from './routes/borrowRoutes'
 import copiesRoutes from './routes/copiesRoutes'
 import bookSummaryRoutes from './routes/bookSummaryRoutes'
+import issueRoutes from './routes/issueRoutes'
 
 
 
@@ -38,6 +39,7 @@ app.use("/api/v1/books", booksRoutes)
 app.use("/api/v1/borrows", borrowRoutes)
 app.use("/api/v1/summary", bookSummaryRoutes)
 app.use("/api/v1/bookCopies", copiesRoutes)
+app.use("/api/v1/issue",issueRoutes)
 
 
 
