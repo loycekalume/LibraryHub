@@ -1,13 +1,13 @@
 import express from 'express'
 
 
-import { extendDueDate, getAllBorrows, getOverdueBorrows} from '../controllers/borrowController'
+import { getAllBorrows, getOverdueBorrows} from '../controllers/borrowController'
 
 const router = express.Router()
 
 
 
-router.put("/extend/:id",  extendDueDate);
+// router.put("/extend/:id",  extendDueDate);
 router.get("/overdue",  getOverdueBorrows);
 router.get("/",getAllBorrows)
 

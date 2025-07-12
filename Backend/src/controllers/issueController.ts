@@ -101,3 +101,78 @@ export const getIssuedBooks = asyncHandler(async (req: Request, res: Response) =
 
   res.status(200).json({ issues: result.rows });
 });
+
+
+
+export const extendDueDate = asyncHandler(async (req: Request, res: Response) => {
+  const { issue_id } = req.params;
+  const { new_due_date } = req.body;
+
+  if (!new_due_date) {
+    return res.status(400).json({ message: "New due date is required" });
+  }
+
+  const issued = await pool.query(
+    `SELECT * FROM issued_books WHERE issue_id = $1`,
+    [issue_id]
+  );
+
+  if (issued.rows.length === 0) {
+    return res.status(404).json({ message: "Issued book not found" });
+  }
+
+  if (issued.rows[0].status === "Returned") {
+    return res.status(400).json({ message: "Cannot extend a returned book" });
+  }
+
+  const updated = await pool.query(
+    `UPDATE issued_books 
+     SET due_date = $1 
+     WHERE issue_id = $2 
+     RETURNING *`,
+    [new_due_date, issue_id]
+  );
+
+  res.status(200).json({ message: "Due date extended", updated: updated.rows[0] });
+});
+
+
+export const getOverdueBooks = asyncHandler(async (req: Request, res: Response) => {
+  const result = await pool.query(`
+    SELECT 
+      i.issue_id,
+      u.first_name,
+      u.last_name,
+      b.title,
+      i.due_date,
+      i.borrow_date,
+      i.status,
+      CURRENT_DATE - i.due_date AS overdue_days
+    FROM issued_books i
+    JOIN users u ON i.user_id = u.user_id
+    JOIN book_copies c ON i.copy_id = c.copy_id
+    JOIN books b ON c.book_id = b.book_id
+    WHERE i.status = 'Borrowed' AND i.due_date < CURRENT_DATE
+    ORDER BY i.due_date ASC
+  `);
+
+  res.status(200).json({ overdue: result.rows });
+});
+export const getDueToday = asyncHandler(async (req: Request, res: Response) => {
+  const result = await pool.query(`
+    SELECT 
+      i.issue_id,
+      u.first_name,
+      u.last_name,
+      b.title,
+      i.due_date,
+      i.status
+    FROM issued_books i
+    JOIN users u ON i.user_id = u.user_id
+    JOIN book_copies c ON i.copy_id = c.copy_id
+    JOIN books b ON c.book_id = b.book_id
+    WHERE i.status = 'Borrowed' AND i.due_date = CURRENT_DATE
+  `);
+
+  res.status(200).json({ dueToday: result.rows });
+});

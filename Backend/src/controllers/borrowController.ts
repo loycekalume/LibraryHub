@@ -2,31 +2,31 @@ import { Request, Response } from "express";
 import asyncHandler from "../middlewares/asyncHandler";
 import pool from "../db/db.config";
 
-export const extendDueDate = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params; // borrow_id
-  const { new_due_date } = req.body;
+// export const extendDueDate = asyncHandler(async (req: Request, res: Response) => {
+//   const { id } = req.params; // borrow_id
+//   const { new_due_date } = req.body;
 
-  if (!new_due_date) {
-    return res.status(400).json({ message: "Please provide new_due_date" });
-  }
+//   if (!new_due_date) {
+//     return res.status(400).json({ message: "Please provide new_due_date" });
+//   }
 
-  const borrow = await pool.query(`SELECT * FROM borrows WHERE borrow_id = $1`, [id]);
+//   const borrow = await pool.query(`SELECT * FROM borrows WHERE borrow_id = $1`, [id]);
 
-  if (borrow.rows.length === 0) {
-    return res.status(404).json({ message: "Borrow record not found" });
-  }
+//   if (borrow.rows.length === 0) {
+//     return res.status(404).json({ message: "Borrow record not found" });
+//   }
 
-  if (borrow.rows[0].status !== "borrowed") {
-    return res.status(400).json({ message: "Cannot extend. Book is already returned or overdue." });
-  }
+//   if (borrow.rows[0].status !== "borrowed") {
+//     return res.status(400).json({ message: "Cannot extend. Book is already returned or overdue." });
+//   }
 
-  await pool.query(
-    `UPDATE borrows SET due_date = $1 WHERE borrow_id = $2`,
-    [new_due_date, id]
-  );
+//   await pool.query(
+//     `UPDATE borrows SET due_date = $1 WHERE borrow_id = $2`,
+//     [new_due_date, id]
+//   );
 
-  res.status(200).json({ message: "Due date extended successfully" });
-});
+//   res.status(200).json({ message: "Due date extended successfully" });
+// });
 
 
 export const getOverdueBorrows = asyncHandler(async (req: Request, res: Response) => {
