@@ -77,3 +77,27 @@ export const returnBook = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(200).json({ message: "Book returned successfully" });
 });
+
+
+export const getIssuedBooks = asyncHandler(async (req: Request, res: Response) => {
+  const result = await pool.query(`
+    SELECT 
+      i.issue_id,
+      u.user_id,
+      u.first_name,
+      u.last_name,
+      b.title,
+      c.copy_number,
+      i.status,
+      i.borrow_date,
+      i.due_date,
+      i.return_date
+    FROM issued_books i
+    JOIN users u ON i.user_id = u.user_id
+    JOIN book_copies c ON i.copy_id = c.copy_id
+    JOIN books b ON c.book_id = b.book_id
+    ORDER BY i.borrow_date DESC
+  `);
+
+  res.status(200).json({ issues: result.rows });
+});
