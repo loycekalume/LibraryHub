@@ -1,19 +1,54 @@
 import AdminLayout from "../Layouts/adminLayouts";
-import { Card, Row, Col, Table } from "react-bootstrap";
+import { Card, Row, Col, Table, Spinner } from "react-bootstrap";
+import { useEffect, useState } from "react";
+import axios from "../utils/axios";
+
+interface Stats {
+  users: number;
+  books: number;
+  borrowers: number;
+}
+
+interface RecentUser {
+  name: string;
+  role: string;
+  joined: string;
+}
 
 export default function AdminDashboard() {
-  // Fake counts
-  const stats = {
-    users: 24,
-    books: 67,
-    borrowers: 15,
-  };
+  const [stats, setStats] = useState<Stats>({ users: 0, books: 0, borrowers: 0 });
+  const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const recentUsers = [
-    { name: "James Yaung", role: "librarian", joined: "2025-06-20" },
-    { name: "Nicole Akinyi", role: "borrower", joined: "2025-06-19" },
-    { name: "Alice Mwangi", role: "admin", joined: "2025-06-15" },
-  ];
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [statsRes, usersRes] = await Promise.all([
+          axios.get("/admin/stats"),
+          axios.get("/admin/recent-users"),
+        ]);
+
+        setStats(statsRes.data);
+        setRecentUsers(usersRes.data.users);
+      } catch (err) {
+        console.error("Failed to fetch admin data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="text-center py-5">
+          <Spinner animation="border" variant="primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -65,7 +100,7 @@ export default function AdminDashboard() {
                   <tr key={index}>
                     <td>{user.name}</td>
                     <td className="text-capitalize">{user.role}</td>
-                    <td>{user.joined}</td>
+                    <td>{new Date(user.joined).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
