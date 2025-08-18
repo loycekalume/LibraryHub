@@ -2,6 +2,7 @@
 import { Request, Response } from "express";
 import asyncHandler from "../middlewares/asyncHandler";
 import pool from "../db/db.config";
+import { UserRequest } from "../utils/types/userTypes";
 
 export const issueBook = asyncHandler(async (req: Request, res: Response) => {
   const { user_id, book_id, copy_id, borrow_date, due_date } = req.body;
@@ -176,3 +177,37 @@ export const getDueToday = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(200).json({ dueToday: result.rows });
 });
+
+// controllers/issueController.ts
+
+
+export const getMyBooks = asyncHandler(async (req: UserRequest, res: Response) => {
+  const user = req.user;
+
+  if (!user || !user.user_id) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const result = await pool.query(
+    `
+    SELECT 
+      i.issue_id,
+      b.title,
+      b.author,
+      b.image_url,
+      i.status,
+      i.borrow_date,
+      i.due_date,
+      i.return_date
+    FROM issued_books i
+    JOIN book_copies c ON i.copy_id = c.copy_id
+    JOIN books b ON c.book_id = b.book_id
+    WHERE i.user_id = $1
+    ORDER BY i.borrow_date DESC
+    `,
+    [user.user_id]
+  );
+
+  res.status(200).json({ issues: result.rows });
+});
+

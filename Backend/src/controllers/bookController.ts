@@ -165,14 +165,8 @@ export const deleteBook = asyncHandler(async (req: BookRequest, res: Response) =
 
 
 
-
 export const patchBook = asyncHandler(async (req: BookRequest, res: Response) => {
   const { id } = req.params;
-
-  // Optional: Uncomment if authentication is enforced
-  // if (!req.user) {
-  //   return res.status(401).json({ message: "Not authorized" });
-  // }
 
   // Check if book exists
   const check = await pool.query("SELECT * FROM books WHERE book_id = $1", [id]);
@@ -180,13 +174,28 @@ export const patchBook = asyncHandler(async (req: BookRequest, res: Response) =>
     return res.status(404).json({ message: "Book not found" });
   }
 
-  // Dynamically build SET clause
-  const fields = [];
-  const values = [];
+  // Define whitelist of fields allowed to update
+  const allowedFields = [
+    "title",
+    "author",
+    "description",
+    "published_year",
+    "pages",
+    "image_url",
+    "genre",
+    "total_copies"
+  ];
+
+  const fields: string[] = [];
+  const values: any[] = [];
   let index = 1;
 
   for (const key in req.body) {
-    if (req.body[key] !== undefined) {
+    if (
+      allowedFields.includes(key) &&
+      req.body[key] !== undefined &&
+      req.body[key] !== null
+    ) {
       fields.push(`${key} = $${index}`);
       values.push(req.body[key]);
       index++;
@@ -194,14 +203,16 @@ export const patchBook = asyncHandler(async (req: BookRequest, res: Response) =>
   }
 
   if (fields.length === 0) {
-    return res.status(400).json({ message: "No fields provided for update" });
+    return res.status(400).json({ message: "No valid fields provided for update" });
   }
 
-  // Add updated_at and book_id
+  // Add updated_at field
   fields.push(`updated_at = CURRENT_TIMESTAMP`);
+
+  // Final query
   const query = `
-    UPDATE books 
-    SET ${fields.join(", ")} 
+    UPDATE books
+    SET ${fields.join(", ")}
     WHERE book_id = $${index}
     RETURNING *;
   `;
@@ -212,4 +223,24 @@ export const patchBook = asyncHandler(async (req: BookRequest, res: Response) =>
     message: "Book updated successfully",
     book: result.rows[0],
   });
+});
+
+export const getBooksOverview = asyncHandler(async (req: Request, res: Response) => {
+  const result = await pool.query(`
+    SELECT 
+      b.book_id,
+      b.title,
+      b.author,
+       b.genre, 
+      b.image_url,
+      b.description,
+      b.total_copies,
+      COUNT(CASE WHEN bc.is_available = true THEN 1 END) AS available_copies
+    FROM books b
+    LEFT JOIN book_copies bc ON bc.book_id = b.book_id
+    GROUP BY b.book_id
+    ORDER BY b.title
+  `);
+
+  res.status(200).json({ books: result.rows });
 });
