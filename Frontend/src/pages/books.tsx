@@ -67,7 +67,7 @@ export default function LibrarianBooks() {
   const handleAddOrUpdate = async () => {
     try {
       if (editingId) {
-        await axios.put(`/books/${editingId}`, formData);
+        await axios.patch(`/books/${editingId}`, formData);
       } else {
         await axios.post("/books", formData);
       }

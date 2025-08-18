@@ -1,100 +1,113 @@
-import{useState} from 'react'
-import Navbar from '../components/navbar'
-import Footer from '../components/footer'
-import { Link } from 'react-router-dom';
- export default function Home() {
-  const [searchQuery, setSearchQuery] = useState('');
+import { useEffect, useState } from "react";
+import Navbar from "../components/navbar";
+import Footer from "../components/footer";
+import { Link } from "react-router-dom";
+import axios from "../utils/axios";
 
-  function handleMainSearch() {
-    console.log('Main search:', searchQuery);
-  }
+interface Book {
+  book_id: number;
+  title: string;
+  author: string;
+  image_url?: string;
+  total_copies: number;
+  available_copies: number;
+}
+
+export default function Home() {
+  const [books, setBooks] = useState<Book[]>([]);
+  const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const res = await axios.get("/books/overview");
+        const parsed = res.data.books.map((book: any) => ({
+          ...book,
+          available_copies: parseInt(book.available_copies),
+          total_copies: parseInt(book.total_copies),
+        }));
+        setBooks(parsed);
+        setFilteredBooks(parsed); // Set initially
+      } catch (err) {
+        console.error("Failed to fetch books", err);
+      }
+    };
+
+    fetchBooks();
+  }, []);
+
+  const handleMainSearch = () => {
+    const filtered = books.filter(
+      (book) =>
+        book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        book.author.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredBooks(filtered);
+  };
 
   const homeStyles = {
     heroSection: {
-      backgroundColor: '#f8f9fa',
-      padding: '4rem 0',
-      textAlign: 'center' as const
+      backgroundColor: "#f8f9fa",
+      padding: "4rem 0",
+      textAlign: "center" as const,
     },
     searchSection: {
-      maxWidth: '600px',
-      margin: '2rem auto'
+      maxWidth: "600px",
+      margin: "2rem auto",
     },
     bookCard: {
-      backgroundColor: 'white',
-      borderRadius: '8px',
-      overflow: 'hidden',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      marginBottom: '1rem'
+      backgroundColor: "white",
+      borderRadius: "8px",
+      overflow: "hidden",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+      marginBottom: "1rem",
     },
     bookImage: {
-      width: '100%',
-      height: '200px',
-      backgroundColor: '#ddd',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center'
-    },
-    borrowButton: {
-      backgroundColor: '#7c3aed',
-      border: 'none',
-      color: 'white',
-      padding: '8px 16px',
-      borderRadius: '4px',
-      width: '100%'
+      width: "100%",
+      height: "200px",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundColor: "#ddd",
     },
     signUpSection: {
-      backgroundColor: '#7c3aed',
-      padding: '3rem 0',
-      textAlign: 'center' as const,
-      color: 'white'
-    }
+      backgroundColor: "#7c3aed",
+      padding: "3rem 0",
+      textAlign: "center" as const,
+      color: "white",
+    },
   };
-
-  const books = [
-    { id: 1, title: 'Milk and Honey', author: 'Rupi Kaur', status: 'Available', image: '/api/placeholder/150/200' },
-    { id: 2, title: 'Milk and Honey', author: 'Rupi Kaur', status: 'Available', image: '/api/placeholder/150/200' },
-    { id: 3, title: 'Love is Enough', author: 'Vi. Innocent', status: 'Borrowed', image: '/api/placeholder/150/200' },
-    { id: 4, title: 'Love is Enough', author: 'Vi. Innocent', status: 'Borrowed', image: '/api/placeholder/150/200' }
-  ];
 
   return (
     <>
-      {/* Bootstrap CSS CDN */}
-      <link 
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" 
-        rel="stylesheet" 
-      />
-      
       <div className="min-vh-100 d-flex flex-column">
-        {/* Navbar */}
         <Navbar />
 
-        {/* Main Content */}
         <main className="flex-grow-1">
           {/* Hero Section */}
           <section style={homeStyles.heroSection}>
             <div className="container">
               <h1 className="display-4 fw-bold mb-3">
-                Discover a Word of <span style={{ color: '#7c3aed' }}>Knowledge</span>
+                Discover a World of <span style={{ color: "#7c3aed" }}>Knowledge</span>
               </h1>
               <p className="lead text-muted mb-4">
-                Embark, discover and explore amazing books, stories with more books
+                Explore and locate books available in our physical library
               </p>
 
-              {/* Main Search */}
               <div style={homeStyles.searchSection}>
                 <div className="input-group input-group-lg">
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Search books by title, author, year..."
+                    placeholder="Search books by title or author..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
-                  <button 
-                    className="btn" 
+                  <button
+                    className="btn"
                     type="button"
+                    style={{ backgroundColor: "#7c3aed", color: "white" }}
                     onClick={handleMainSearch}
-                    style={{ backgroundColor: '#7c3aed', color: 'white' }}
                   >
                     Search
                   </button>
@@ -107,42 +120,37 @@ import { Link } from 'react-router-dom';
           <section className="py-5">
             <div className="container">
               <div className="d-flex justify-content-between align-items-center mb-4">
-                <h3>Our Books</h3>
-                <small className="text-muted">Showing 4 of 1000 books</small>
+                <h3>All Books</h3>
+                <small className="text-muted">
+                  Showing {filteredBooks.length} of {books.length} books
+                </small>
               </div>
 
               <div className="row">
-                {books.map((book) => (
-                  <div key={book.id} className="col-md-3 mb-4">
+                {filteredBooks.map((book) => (
+                  <div key={book.book_id} className="col-md-3 mb-4">
                     <div style={homeStyles.bookCard}>
-                      <div 
+                      <div
                         style={{
                           ...homeStyles.bookImage,
-                          backgroundColor: '#2d3748',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white'
+                          backgroundImage: `url(${book.image_url || "/book-placeholder.jpg"})`,
                         }}
-                      >
-                        📚 Book Cover
-                      </div>
+                      />
                       <div className="p-3">
                         <h6 className="fw-bold mb-1">{book.title}</h6>
                         <p className="text-muted small mb-2">{book.author}</p>
-                        <div className="d-flex justify-content-between align-items-center mb-2">
-                          <span 
-                            className={`badge ${book.status === 'Available' ? 'bg-success' : 'bg-warning'}`}
+                        <div className="d-flex justify-content-between align-items-center">
+                          <span
+                            className={`badge ${
+                              book.available_copies > 0 ? "bg-success" : "bg-danger"
+                            }`}
                           >
-                            {book.status}
+                            {book.available_copies > 0 ? "Available" : "Not Available"}
+                          </span>
+                          <span className="text-muted small">
+                            {book.available_copies} of {book.total_copies} copies
                           </span>
                         </div>
-                        <button 
-                          style={homeStyles.borrowButton}
-                          disabled={book.status === 'Borrowed'}
-                        >
-                          {book.status === 'Available' ? 'Borrow' : 'Borrowed'}
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -156,16 +164,14 @@ import { Link } from 'react-router-dom';
             <div className="container">
               <h2 className="mb-3">Ready to Start Reading?</h2>
               <Link to="/register">
-              <button className="btn btn-light btn-lg">Sign Up</button>
+                <button className="btn btn-light btn-lg">Sign Up</button>
               </Link>
             </div>
           </section>
         </main>
 
-        {/* Enhanced Footer */}
         <Footer />
       </div>
     </>
   );
 }
-
