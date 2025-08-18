@@ -1,13 +1,9 @@
-import{useState} from 'react'
+
 import { Link } from 'react-router-dom'
 
 
 export default function Navbar() {
-  const [searchQuery, setSearchQuery] = useState('');
-
-  function handleSearch() {
-    console.log('Searching for:', searchQuery);
-  }
+  
 
   const navStyles = {
     navbar: {
@@ -67,22 +63,7 @@ export default function Navbar() {
             <Link to="/mybooks" className="text-decoration-none text-dark me-4">MyBooks</Link>
           </div>
 
-          {/* Search Bar */}
-          <div style={navStyles.searchBar}>
-            <div className="position-relative">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search books..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={navStyles.searchInput}
-              />
-              <button type="button" onClick={handleSearch} style={navStyles.searchButton}>
-                🔍
-              </button>
-            </div>
-          </div>
+         
 
           {/* Auth Buttons */}
           <div className="d-flex gap-2">
