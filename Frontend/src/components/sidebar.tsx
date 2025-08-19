@@ -1,6 +1,16 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { logout } from "../pages/Auth/logout"; // frontend service we created
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    const success = await logout();
+    if (success) {
+      navigate("/login");
+    }
+  };
+
   return (
     <div
       className="d-flex flex-column vh-100 p-3 text-white"
@@ -44,8 +54,14 @@ export default function Sidebar() {
         Borrowers
       </NavLink>
 
+      {/* Logout button */}
       <div className="mt-auto">
-        <button className="btn btn-outline-light w-100 mt-4">🔓 Logout</button>
+        <button 
+          onClick={handleLogout} 
+          className="btn btn-outline-light w-100 mt-4"
+        >
+          🔓 Logout
+        </button>
       </div>
     </div>
   );
