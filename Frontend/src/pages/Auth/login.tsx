@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import{Link} from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom';
+import axios from '../../utils/axios'; 
 interface LoginFormData {
   email: string;
   password: string;
@@ -12,6 +13,8 @@ function LoginPage() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -21,10 +24,34 @@ function LoginPage() {
     }));
   }
 
-  function handleSubmit() {
-    console.log('Login submitted:', formData);
-    // Add your login logic here
+  async function handleSubmit(e?: React.FormEvent) {
+  e?.preventDefault();
+  setError(null);
+
+  try {
+    const res = await axios.post("/auth/login", formData);
+
+    // Save token + user in localStorage
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("user", JSON.stringify(res.data.user));
+
+    const role = res.data.user.role.toLowerCase();
+
+    //  Redirect based on role
+    if (role === "admin") {
+      navigate("/admindashboard");
+    } else if (role === "librarian") {
+      navigate("/librariandashboard");
+    } else if (role === "borrower") {
+      navigate("/");
+    } else {
+      navigate("/"); 
+    }
+  } catch (err: any) {
+    console.error("Login failed", err);
+    setError(err.response?.data?.message || "Login failed. Try again.");
   }
+}
 
   const customStyles = {
     container: {
@@ -71,8 +98,7 @@ function LoginPage() {
       color: '#6c757d',
       cursor: 'pointer',
       fontSize: '16px'
-    },
-   
+    }
   };
 
   // Simple SVG eye icons
@@ -92,39 +118,19 @@ function LoginPage() {
 
   return (
     <>
-      {/* Bootstrap CSS CDN */}
-      <link 
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" 
-        rel="stylesheet" 
-      />
-      
+      <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"/>
+
       <div className="d-flex align-items-center justify-content-center" style={customStyles.container}>
         <div style={customStyles.formCard}>
-          {/* Header */}
           <div className="text-center mb-4">
-            <div className="d-flex align-items-center justify-content-center mb-2">
-              <h1 className="h3 fw-bold text-primary mb-0">Login</h1>
-              <div className="ms-2 text-primary">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14,2 14,8 20,8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <polyline points="10,9 9,9 8,9"/>
-                </svg>
-              </div>
-            </div>
-            <div className="d-flex align-items-center justify-content-center text-muted mb-2">
-              <div style={customStyles.brandIcon}></div>
-              <span className="fw-semibold">LibraryHub</span>
-            </div>
-            <p className="text-muted mb-1">Welcome back</p>
+            <h1 className="h3 fw-bold text-primary mb-2">Login</h1>
+            <span className="fw-semibold text-muted">LibraryHub</span>
             <p className="text-muted small">Enter your credentials to access your account</p>
           </div>
 
-          {/* Form */}
-          <div>
-            {/* Email Address */}
+          {error && <div className="alert alert-danger">{error}</div>}
+
+          <form onSubmit={handleSubmit}>
             <div className="mb-3">
               <input
                 type="email"
@@ -138,7 +144,6 @@ function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div className="mb-3 position-relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -159,38 +164,22 @@ function LoginPage() {
               </button>
             </div>
 
-           
-
-            {/* Submit Button */}
             <button
-              type="button"
-              onClick={handleSubmit}
+              type="submit"
               className="btn btn-primary w-100 mb-3"
               style={customStyles.submitButton}
             >
               Login
             </button>
+          </form>
 
-            {/* Sign Up Link */}
-            <div className="text-center">
-              <p className="small text-muted mb-0">
-                Don't have an account?{' '}
-                <Link to="/register">
-                <button
-                  type="button"
-                  className="btn btn-link p-0 text-decoration-none fw-medium"
-                  style={{ color: '#7c3aed' }}
-                  onClick={() => console.log('Navigate to signup')}
-                >
-                  Sign Up
-                </button>
-                </Link>
-              </p>
-            </div>
-
-           
-
-        
+          <div className="text-center">
+            <p className="small text-muted mb-0">
+              Don't have an account?{' '}
+              <Link to="/register" className="fw-medium" style={{ color: '#7c3aed' }}>
+                Sign Up
+              </Link>
+            </p>
           </div>
         </div>
       </div>
